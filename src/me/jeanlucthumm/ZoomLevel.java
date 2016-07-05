@@ -49,11 +49,14 @@ class ZoomLevel {
         return new Rectangle2D(localMin.getX(), localMin.getY(), width, height);
     }
 
-    ZoomLevel zoom(Rectangle2D original, double percent) {
+    ZoomLevel zoom(Point2D source, Rectangle2D original, double percent) {
         double adjPercent = 1 + percent;
-        double widthOffset = percent * original.getWidth();
-        double heightOffset = percent * original.getHeight();
-        Point2D min = new Point2D(anchor.getX() + widthOffset, anchor.getY() + heightOffset);
-        return new ZoomLevel(min, adjPercent * widthRatio, adjPercent * heightRatio);
+        Point2D prevSource = convertToOriginal(source);
+        ZoomLevel newZoom = new ZoomLevel(anchor, adjPercent * widthRatio, adjPercent * heightRatio);
+        Point2D newSource = newZoom.convertToOriginal(source);
+        Point2D delta = prevSource.subtract(newSource);
+        newZoom.anchor = anchor.add(delta);
+        System.out.println("delta = " + delta); // DEBUG
+        return newZoom;
     }
 }

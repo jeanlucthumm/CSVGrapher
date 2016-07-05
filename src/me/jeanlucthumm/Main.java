@@ -42,6 +42,7 @@ public class Main extends Application {
     private Point2D selecAnchor;    // stores anchor of each selection rectangle
     private Rectangle selecRec;     // actual selection rectangle
     private ZoomLevel initZoom;     // furthest away zoom level
+    private boolean cannotUnzoom;   // true if initZoom has been reached
     private Stack<ZoomLevel> zoomLog;   // keeps track of all zooms
 
     @Override
@@ -104,15 +105,22 @@ public class Main extends Application {
     }
 
     private void zoom(ScrollEvent event) {
-        // TODO this pops the initial zoom. NO!
         if (event.getDeltaY() > 0) {
-            ZoomLevel level = zoomLog.peek().zoom(tree.getBounds(), 0.05);
+            Point2D source = new Point2D(event.getX(), event.getY());
+            ZoomLevel level = zoomLog.peek().zoom(source, tree.getBounds(), 0.05);
             zoomLog.push(level);
+            cannotUnzoom = false;
             gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
             tree.graphPointsAndBoundaries(gc, level);
         } else if (event.getDeltaY() < 0){
-            if (zoomLog.size() == 1) return;
-            ZoomLevel level = zoomLog.pop();
+            if (cannotUnzoom) return;
+            ZoomLevel level;
+            if (zoomLog.size() == 1) {
+                cannotUnzoom = true;
+                level = zoomLog.peek();
+            } else {
+                level = zoomLog.pop();
+            }
             gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
             tree.graphPointsAndBoundaries(gc, level);
         }
