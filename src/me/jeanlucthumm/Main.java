@@ -16,7 +16,6 @@ import javafx.scene.transform.Scale;
 import javafx.scene.transform.Translate;
 import javafx.stage.Stage;
 import javafx.util.Pair;
-import org.w3c.dom.css.Rect;
 
 import java.io.FileNotFoundException;
 import java.io.IOError;
@@ -32,14 +31,15 @@ public class Main extends Application {
 
     // Constants
     public static final int POINT_RAD = 2;          // radius of points graphed
-    public static final String PATH = "data.csv";
-    public static final double ZOOM_INC = 5;        // amount of zoom per scroll in percent
+    public static final String PATH = "data.csv";   // path to data file (csv)
+    public static final double ZOOM_INC = 0.1;        // amount of zoom per scroll in percent
 
     private Group root;             // holds all other nodes
     private Canvas canvas;          // where graphing will occur
     private GraphicsContext gc;     // gc of canvas
     private QuadTree tree;          // contains points for logn access times
     private Point2D selecAnchor;    // stores anchor of each selection rectangle
+    private Point2D panAnchor;      // stores anchor of each pan
     private Rectangle selecRec;     // actual selection rectangle
     private ZoomLevel initZoom;     // furthest away zoom level
     private boolean cannotUnzoom;   // true if initZoom has been reached
@@ -57,7 +57,6 @@ public class Main extends Application {
         // Set up canvas
         canvas = new Canvas();
         gc = canvas.getGraphicsContext2D();
-        canvas.addEventHandler(MouseEvent.MOUSE_CLICKED, this::canvasClicked);
         canvas.heightProperty().bind(scene.heightProperty());
         canvas.widthProperty().bind(scene.widthProperty());
         canvas.getTransforms().add(new Translate(0, scene.getHeight())); // need origin in bottom left
@@ -66,11 +65,13 @@ public class Main extends Application {
 
         zoomLog = new Stack<>();
 
-        // Set up root event handlers
+        // Set up event handlers
         root.setOnMousePressed(this::captureSelectionAnchor);
         root.setOnMouseDragged(this::dragSelection);
         root.setOnMouseReleased(this::endSelection);
         canvas.setOnScroll(this::zoom);
+        canvas.setOnMousePressed(this::capturePanAnchor);
+        canvas.setOnMouseDragged(this::dragPan);
 
         // Generate and populate tree
         CSVReader reader = new CSVReader(PATH);
@@ -104,10 +105,15 @@ public class Main extends Application {
         primaryStage.show();
     }
 
+    private void clearAndGraph() {
+        gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
+        tree.graphPointsAndBoundaries(gc, zoomLog.peek());
+    }
+
     private void zoom(ScrollEvent event) {
         if (event.getDeltaY() > 0) {
             Point2D source = new Point2D(event.getX(), event.getY());
-            ZoomLevel level = zoomLog.peek().zoom(source, tree.getBounds(), 0.05);
+            ZoomLevel level = zoomLog.peek().zoom(source, tree.getBounds(), ZOOM_INC);
             zoomLog.push(level);
             cannotUnzoom = false;
             gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
@@ -127,9 +133,26 @@ public class Main extends Application {
     }
 
     /** Handle clicks on canvas **/
-    private void canvasClicked(MouseEvent event) {
-        if (event.getButton() == MouseButton.SECONDARY) {
+    private void capturePanAnchor(MouseEvent event) {
+        if (event.getButton() != MouseButton.SECONDARY) return;
+//        panAnchor = new Point2D(event.getX(), event.getY());
+    }
+
+    private void dragPan(MouseEvent event) {
+        if (event.getButton() != MouseButton.SECONDARY) return;
+        // Set the pan anchor if there is none
+        if (panAnchor == null) {
+            panAnchor = new Point2D(event.getX(), event.getY());
+            return;
         }
+
+        // Convert delta to original coordinates
+        Point2D delta = panAnchor.subtract(new Point2D(event.getX(), event.getY()));
+        delta = zoomLog.peek().convertDeltaToOriginal(delta);
+
+        zoomLog.peek().setPanDelta(delta);
+        clearAndGraph();
+        panAnchor = new Point2D(event.getX(), event.getY());
     }
 
     /** Captures root point for selection rectangle */

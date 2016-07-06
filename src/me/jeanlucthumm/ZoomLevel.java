@@ -2,7 +2,6 @@ package me.jeanlucthumm;
 
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
-import javafx.scene.shape.Rectangle;
 
 class ZoomLevel {
     private Point2D anchor;
@@ -49,6 +48,10 @@ class ZoomLevel {
         return new Rectangle2D(localMin.getX(), localMin.getY(), width, height);
     }
 
+    Point2D convertDeltaToOriginal(Point2D delta) {
+        return new Point2D(delta.getX() / widthRatio, delta.getY() / heightRatio);
+    }
+
     ZoomLevel zoom(Point2D source, Rectangle2D original, double percent) {
         double adjPercent = 1 + percent;
         Point2D prevSource = convertToOriginal(source);
@@ -56,7 +59,10 @@ class ZoomLevel {
         Point2D newSource = newZoom.convertToOriginal(source);
         Point2D delta = prevSource.subtract(newSource);
         newZoom.anchor = anchor.add(delta);
-        System.out.println("delta = " + delta); // DEBUG
         return newZoom;
+    }
+
+    void setPanDelta(Point2D delta) {
+        anchor = anchor.add(delta);
     }
 }
