@@ -34,8 +34,8 @@ public class Main extends Application {
     public static final double ZOOM_INC = 0.1;        // amount of zoomLevel per scroll in percent
 
     // Controls
-    public static final MouseButton PAN_BUTTON = MouseButton.SECONDARY;
-    public static final MouseButton SELECT_BUTTON = MouseButton.PRIMARY;
+    public static final MouseButton PAN_BUTTON = MouseButton.PRIMARY;
+    public static final MouseButton SELECT_BUTTON = MouseButton.SECONDARY;
 
     private Group root;             // holds all other nodes
     private Canvas canvas;          // where graphing will occur
@@ -45,7 +45,7 @@ public class Main extends Application {
     private Point2D panAnchor;      // stores anchor of each pan
     private Rectangle selecRec;     // actual selection rectangle
     private ZoomLevel initZoom;     // standard zoomLevel level
-    private ZoomLevel zoomLevel;         // current zoomLevel level
+    private ZoomLevel zoomLevel;    // current zoomLevel level
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -97,6 +97,7 @@ public class Main extends Application {
             System.err.println(CSVReader.IOERROR_MSG + PATH);
             return;
         }
+
         gc.setFill(Color.BLUE);
         clearAndGraph();
 
@@ -124,16 +125,11 @@ public class Main extends Application {
     /** Handle clicks on canvas **/
     private void capturePanAnchor(MouseEvent event) {
         if (event.getButton() != PAN_BUTTON) return;
-//        panAnchor = new Point2D(event.getX(), event.getY());
+        panAnchor = new Point2D(event.getX(), event.getY());
     }
 
     private void dragPan(MouseEvent event) {
         if (event.getButton() != PAN_BUTTON) return;
-        // Set the pan anchor if there is none
-        if (panAnchor == null) {
-            panAnchor = new Point2D(event.getX(), event.getY());
-            return;
-        }
 
         // Convert delta to original coordinates
         Point2D delta = panAnchor.subtract(new Point2D(event.getX(), event.getY()));
