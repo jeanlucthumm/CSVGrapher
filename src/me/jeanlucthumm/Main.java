@@ -78,6 +78,7 @@ public class Main extends Application {
         CSVReader reader = new CSVReader(PATH);
         try {
             // Create initial zoomLevel level
+            System.out.println("Getting bounds...");
             Pair<Point2D, Point2D> corners = reader.getMinMax();
             Point2D min = corners.getKey();
             Point2D max = corners.getValue();
@@ -86,6 +87,7 @@ public class Main extends Application {
             initZoom = new ZoomLevel(min, scene.getWidth() / initWidth, scene.getHeight() / initHeight);
 
             // Create tree
+            System.out.println("Initializing tree...");
             Rectangle2D bounds = new Rectangle2D(min.getX(), min.getY(), initWidth, initHeight);
             tree = new QuadTree(bounds);
             reader.readData(tree);
@@ -202,29 +204,4 @@ public class Main extends Application {
     public static void main(String[] args) {
         launch(args);
     }
-
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -158,7 +158,7 @@ class QuadTree {
 
     void graphPoints(GraphicsContext gc, ZoomLevel level) {
         if (root == null) return;
-        gc.setFill(Color.BLACK);
+        gc.setFill(Color.BLUE);
         graphPoints(root, gc, level);
     }
 

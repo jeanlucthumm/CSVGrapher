@@ -13,7 +13,6 @@ class CSVReader {
     static final String NOFIND_MSG = "Could not find file ";
     private static final String EMPTY_MSG = "File empty ";
 
-
     private String path;
 
     CSVReader(String path) {
