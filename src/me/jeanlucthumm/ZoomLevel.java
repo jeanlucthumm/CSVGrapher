@@ -20,6 +20,10 @@ class ZoomLevel {
         heightRatio = zoomed.getHeight() / unzoomed.getHeight();
     }
 
+    ZoomLevel(ZoomLevel level) {
+        this(level.anchor, level.widthRatio, level.heightRatio);
+    }
+
     Point2D convertToOriginal(Point2D canvasPt) {
         double x = anchor.getX() + canvasPt.getX() / widthRatio;
         double y = anchor.getY() + canvasPt.getY() / heightRatio;
@@ -54,12 +58,30 @@ class ZoomLevel {
 
     ZoomLevel zoom(Point2D source, Rectangle2D original, double percent) {
         double adjPercent = 1 + percent;
+
+        // Adjust ratios and get resultant source offset
         Point2D prevSource = convertToOriginal(source);
         ZoomLevel newZoom = new ZoomLevel(anchor, adjPercent * widthRatio, adjPercent * heightRatio);
         Point2D newSource = newZoom.convertToOriginal(source);
+
+        // Adjust anchor to keep sources the same in original
         Point2D delta = prevSource.subtract(newSource);
         newZoom.anchor = anchor.add(delta);
         return newZoom;
+    }
+
+    void setZoom(Point2D source, Rectangle2D original, double percent) {
+        double adjPercent = 1 + percent;
+
+        // Adjust ratios and get resultant source offset
+        Point2D prevSource = convertToOriginal(source);
+        widthRatio = adjPercent * widthRatio;
+        heightRatio = adjPercent * heightRatio;
+        Point2D newSource = convertToOriginal(source);
+
+        // Adjust anchor to keep sources the same in original
+        Point2D delta = prevSource.subtract(newSource);
+        anchor = anchor.add(delta);
     }
 
     void setPanDelta(Point2D delta) {

@@ -19,7 +19,6 @@ import javafx.util.Pair;
 
 import java.io.FileNotFoundException;
 import java.io.IOError;
-import java.util.Stack;
 
 /**
  * Demonstration of quad tree insert and find, with visual feedback on subdivisions and
@@ -32,7 +31,7 @@ public class Main extends Application {
     // Constants
     public static final int POINT_RAD = 2;          // radius of points graphed
     public static final String PATH = "data.csv";   // path to data file (csv)
-    public static final double ZOOM_INC = 0.1;        // amount of zoom per scroll in percent
+    public static final double ZOOM_INC = 0.1;        // amount of zoomLevel per scroll in percent
 
     private Group root;             // holds all other nodes
     private Canvas canvas;          // where graphing will occur
@@ -41,9 +40,8 @@ public class Main extends Application {
     private Point2D selecAnchor;    // stores anchor of each selection rectangle
     private Point2D panAnchor;      // stores anchor of each pan
     private Rectangle selecRec;     // actual selection rectangle
-    private ZoomLevel initZoom;     // furthest away zoom level
-    private boolean cannotUnzoom;   // true if initZoom has been reached
-    private Stack<ZoomLevel> zoomLog;   // keeps track of all zooms
+    private ZoomLevel initZoom;     // standard zoomLevel level
+    private ZoomLevel zoomLevel;         // current zoomLevel level
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -63,8 +61,6 @@ public class Main extends Application {
         canvas.getTransforms().add(new Scale(1, -1));
         root.getChildren().add(canvas);
 
-        zoomLog = new Stack<>();
-
         // Set up event handlers
         root.setOnMousePressed(this::captureSelectionAnchor);
         root.setOnMouseDragged(this::dragSelection);
@@ -76,18 +72,20 @@ public class Main extends Application {
         // Generate and populate tree
         CSVReader reader = new CSVReader(PATH);
         try {
-            // Create initial zoom level
+            // Create initial zoomLevel level
             Pair<Point2D, Point2D> corners = reader.getMinMax();
             Point2D min = corners.getKey();
             Point2D max = corners.getValue();
             double initWidth = max.getX() - min.getX();
             double initHeight = max.getY() - min.getY();
             initZoom = new ZoomLevel(min, scene.getWidth() / initWidth, scene.getHeight() / initHeight);
+            zoomLevel = new ZoomLevel(initZoom);
 
             // Create tree
             Rectangle2D bounds = new Rectangle2D(min.getX(), min.getY(), initWidth, initHeight);
             tree = new QuadTree(bounds);
             reader.readData(tree);
+
         } catch (FileNotFoundException e) {
             System.err.println(CSVReader.NOFIND_MSG + PATH);
             return;
@@ -96,10 +94,7 @@ public class Main extends Application {
             return;
         }
         gc.setFill(Color.BLUE);
-        tree.graphPointsAndBoundaries(gc, initZoom);
-//        tree.graphPoints(gc, initZoom);
-
-        zoomLog.push(initZoom);
+        clearAndGraph();
 
         // Display to user
         primaryStage.show();
@@ -107,28 +102,18 @@ public class Main extends Application {
 
     private void clearAndGraph() {
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        tree.graphPointsAndBoundaries(gc, zoomLog.peek());
+        tree.graphPointsAndBoundaries(gc, zoomLevel);
     }
 
     private void zoom(ScrollEvent event) {
-        if (event.getDeltaY() > 0) {
+        if (event.getDeltaY() > 0) { // Zoom in
             Point2D source = new Point2D(event.getX(), event.getY());
-            ZoomLevel level = zoomLog.peek().zoom(source, tree.getBounds(), ZOOM_INC);
-            zoomLog.push(level);
-            cannotUnzoom = false;
-            gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-            tree.graphPointsAndBoundaries(gc, level);
-        } else if (event.getDeltaY() < 0){
-            if (cannotUnzoom) return;
-            ZoomLevel level;
-            if (zoomLog.size() == 1) {
-                cannotUnzoom = true;
-                level = zoomLog.peek();
-            } else {
-                level = zoomLog.pop();
-            }
-            gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-            tree.graphPointsAndBoundaries(gc, level);
+            zoomLevel.setZoom(source, tree.getBounds(), ZOOM_INC);
+            clearAndGraph();
+        } else if (event.getDeltaY() < 0){ // Zoom out
+            Point2D source = new Point2D(event.getX(), event.getY());
+            zoomLevel.setZoom(source, tree.getBounds(), -ZOOM_INC);
+            clearAndGraph();
         }
     }
 
@@ -148,9 +133,9 @@ public class Main extends Application {
 
         // Convert delta to original coordinates
         Point2D delta = panAnchor.subtract(new Point2D(event.getX(), event.getY()));
-        delta = zoomLog.peek().convertDeltaToOriginal(delta);
+        delta = zoomLevel.convertDeltaToOriginal(delta);
 
-        zoomLog.peek().setPanDelta(delta);
+        zoomLevel.setPanDelta(delta);
         clearAndGraph();
         panAnchor = new Point2D(event.getX(), event.getY());
     }
