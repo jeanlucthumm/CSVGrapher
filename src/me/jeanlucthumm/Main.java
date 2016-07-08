@@ -36,6 +36,7 @@ public class Main extends Application {
     // Controls
     public static final MouseButton PAN_BUTTON = MouseButton.PRIMARY;
     public static final MouseButton SELECT_BUTTON = MouseButton.SECONDARY;
+    public static final MouseButton RESET_ZOOM_BUTTON = MouseButton.MIDDLE;
 
     private Group root;             // holds all other nodes
     private Canvas canvas;          // where graphing will occur
@@ -70,7 +71,7 @@ public class Main extends Application {
         root.setOnMouseDragged(this::dragSelection);
         root.setOnMouseReleased(this::endSelection);
         canvas.setOnScroll(this::zoom);
-        canvas.setOnMousePressed(this::capturePanAnchor);
+        canvas.setOnMousePressed(this::handleCanvasClick);
         canvas.setOnMouseDragged(this::dragPan);
 
         // Generate and populate tree
@@ -83,12 +84,16 @@ public class Main extends Application {
             double initWidth = max.getX() - min.getX();
             double initHeight = max.getY() - min.getY();
             initZoom = new ZoomLevel(min, scene.getWidth() / initWidth, scene.getHeight() / initHeight);
-            zoomLevel = new ZoomLevel(initZoom);
 
             // Create tree
             Rectangle2D bounds = new Rectangle2D(min.getX(), min.getY(), initWidth, initHeight);
             tree = new QuadTree(bounds);
             reader.readData(tree);
+
+            // Zoom out a little for padding on the edges
+            Point2D source = new Point2D(canvas.getWidth() / 2, canvas.getHeight() / 2); // zoom out evenly
+            initZoom.setZoom(source, tree.getBounds(), -0.05);
+            zoomLevel = new ZoomLevel(initZoom);
 
         } catch (FileNotFoundException e) {
             System.err.println(CSVReader.NOFIND_MSG + PATH);
@@ -123,9 +128,16 @@ public class Main extends Application {
     }
 
     /** Handle clicks on canvas **/
-    private void capturePanAnchor(MouseEvent event) {
-        if (event.getButton() != PAN_BUTTON) return;
-        panAnchor = new Point2D(event.getX(), event.getY());
+    private void handleCanvasClick(MouseEvent event) {
+        if (event.getButton() == PAN_BUTTON) {
+            // Capture panAnchor
+            panAnchor = new Point2D(event.getX(), event.getY());
+
+        } else if (event.getButton() == RESET_ZOOM_BUTTON) {
+            // Reset zoom
+            zoomLevel = new ZoomLevel(initZoom);
+            clearAndGraph();
+        }
     }
 
     private void dragPan(MouseEvent event) {
