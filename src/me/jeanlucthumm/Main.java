@@ -33,6 +33,10 @@ public class Main extends Application {
     public static final String PATH = "data.csv";   // path to data file (csv)
     public static final double ZOOM_INC = 0.1;        // amount of zoomLevel per scroll in percent
 
+    // Controls
+    public static final MouseButton PAN_BUTTON = MouseButton.SECONDARY;
+    public static final MouseButton SELECT_BUTTON = MouseButton.PRIMARY;
+
     private Group root;             // holds all other nodes
     private Canvas canvas;          // where graphing will occur
     private GraphicsContext gc;     // gc of canvas
@@ -119,12 +123,12 @@ public class Main extends Application {
 
     /** Handle clicks on canvas **/
     private void capturePanAnchor(MouseEvent event) {
-        if (event.getButton() != MouseButton.SECONDARY) return;
+        if (event.getButton() != PAN_BUTTON) return;
 //        panAnchor = new Point2D(event.getX(), event.getY());
     }
 
     private void dragPan(MouseEvent event) {
-        if (event.getButton() != MouseButton.SECONDARY) return;
+        if (event.getButton() != PAN_BUTTON) return;
         // Set the pan anchor if there is none
         if (panAnchor == null) {
             panAnchor = new Point2D(event.getX(), event.getY());
@@ -143,7 +147,7 @@ public class Main extends Application {
     /** Captures root point for selection rectangle */
     private void captureSelectionAnchor(MouseEvent event) {
         // Create selection rectangle and prep for dragging
-        if (event.getButton() != MouseButton.PRIMARY) return;
+        if (event.getButton() != SELECT_BUTTON) return;
         selecAnchor = new Point2D(event.getX(), event.getY());
         selecRec = new Rectangle(selecAnchor.getX(), selecAnchor.getY(), 0, 0);
         selecRec.setStroke(Color.BLACK);
@@ -153,7 +157,7 @@ public class Main extends Application {
 
     /** Resizes selection rectangle */
     private void dragSelection(MouseEvent event) {
-        if (event.getButton() != MouseButton.PRIMARY) return;
+        if (event.getButton() != SELECT_BUTTON) return;
         double newWidth = event.getX() - selecAnchor.getX();
         double newHeight = event.getY() - selecAnchor.getY();
 
@@ -177,7 +181,7 @@ public class Main extends Application {
     /** Removes selection triangle and delegates to tree to find points */
     private void endSelection(MouseEvent event) {
         // Convert to canvas coordinates
-        if (event.getButton() != MouseButton.PRIMARY) return;
+        if (event.getButton() != SELECT_BUTTON) return;
         Point2D canvasPt = canvas.parentToLocal(selecRec.getX(), selecRec.getY());
         Rectangle2D selection = new Rectangle2D(canvasPt.getX(), canvasPt.getY(),
                 selecRec.getWidth(), selecRec.getHeight());
