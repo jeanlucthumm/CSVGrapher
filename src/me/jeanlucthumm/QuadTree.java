@@ -131,11 +131,18 @@ class QuadTree {
         if (root == null) return;
         double width = gc.getLineWidth();
         gc.setLineWidth(0.5);
-        graphPointsAndBoundaries(root, gc, level);
+        // Get dimensions of a pixel converted to the original space
+        Point2D pixelDim = new Point2D(1 / level.getWidthRatio(), 1 / level.getHeightRatio());
+        int x = graphPointsAndBoundaries(root, gc, level, pixelDim);
+        System.out.println("Points graphed: " + x);
         gc.setLineWidth(width);
     }
 
-    private void graphPointsAndBoundaries(Node node, GraphicsContext gc, ZoomLevel level) {
+    private int graphPointsAndBoundaries(Node node, GraphicsContext gc, ZoomLevel level, Point2D pixelDim) {
+        // Check if resolution allows us to ignore this node
+        if (node.bounds.getWidth() < pixelDim.getX() && node.bounds.getHeight() < pixelDim.getY())
+            return 0;
+
         // Convert to local coordinates and graph point
         if (node.data != null) {
             Point2D localPoint = level.convertToLocal(node.data);
@@ -148,12 +155,13 @@ class QuadTree {
         gc.strokeRect(bounds.getMinX(), bounds.getMinY(),
                 bounds.getWidth(), bounds.getHeight());
 
-
+        int res = 1;
         // Traverse
-        if (node.isLeaf()) return;
+        if (node.isLeaf()) return res;
         for (Node quad : node.quads) {
-            graphPointsAndBoundaries(quad, gc, level);
+            res += graphPointsAndBoundaries(quad, gc, level, pixelDim);
         }
+        return res;
     }
 
     void graphPoints(GraphicsContext gc, ZoomLevel level) {

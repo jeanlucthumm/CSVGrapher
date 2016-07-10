@@ -24,6 +24,14 @@ class ZoomLevel {
         this(level.anchor, level.widthRatio, level.heightRatio);
     }
 
+    double getWidthRatio() {
+        return widthRatio;
+    }
+
+    double getHeightRatio() {
+        return heightRatio;
+    }
+
     Point2D convertToOriginal(Point2D canvasPt) {
         double x = anchor.getX() + canvasPt.getX() / widthRatio;
         double y = anchor.getY() + canvasPt.getY() / heightRatio;

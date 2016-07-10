@@ -30,7 +30,7 @@ public class Main extends Application {
 
     // Constants
     public static final int POINT_RAD = 2;          // radius of points graphed
-    public static final String PATH = "data.csv";   // path to data file (csv)
+    public static final String PATH = "data-large.csv";   // path to data file (csv)
     public static final double ZOOM_INC = 0.1;        // amount of zoomLevel per scroll in percent
 
     // Controls
@@ -91,6 +91,8 @@ public class Main extends Application {
             Rectangle2D bounds = new Rectangle2D(min.getX(), min.getY(), initWidth, initHeight);
             tree = new QuadTree(bounds);
             reader.readData(tree);
+
+            System.out.println("Size of tree " + tree.getSize());
 
             // Zoom out a little for padding on the edges
             Point2D source = new Point2D(canvas.getWidth() / 2, canvas.getHeight() / 2); // zoom out evenly
