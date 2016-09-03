@@ -1,6 +1,7 @@
 package me.jeanlucthumm;
 
 import javafx.application.Application;
+import javafx.geometry.Bounds;
 import javafx.geometry.Point2D;
 import javafx.geometry.Rectangle2D;
 import javafx.scene.Group;
@@ -47,6 +48,7 @@ public class Main extends Application {
     private Rectangle selecRec;     // actual selection rectangle
     private ZoomLevel initZoom;     // standard zoomLevel level
     private ZoomLevel zoomLevel;    // current zoomLevel level
+    private Rectangle2D localBounds;    // local bounds of canvas, does not change
 
     @Override
     public void start(Stage primaryStage) throws Exception {
@@ -65,6 +67,11 @@ public class Main extends Application {
         canvas.getTransforms().add(new Translate(0, scene.getHeight())); // need origin in bottom left
         canvas.getTransforms().add(new Scale(1, -1));
         root.getChildren().add(canvas);
+
+        // Get local bounds of canvas as rectangle for reference
+        Bounds cBounds = canvas.getBoundsInLocal();
+        localBounds = new Rectangle2D(cBounds.getMinX(), cBounds.getMinY(),
+                cBounds.getWidth(), cBounds.getHeight());
 
         // Set up event handlers
         root.setOnMousePressed(this::captureSelectionAnchor);
@@ -116,7 +123,7 @@ public class Main extends Application {
 
     private void clearAndGraph() {
         gc.clearRect(0, 0, canvas.getWidth(), canvas.getHeight());
-        tree.graphPointsAndBoundaries(gc, zoomLevel);
+        tree.graphPointsAndBoundaries(gc, zoomLevel, localBounds);
     }
 
     private void zoom(ScrollEvent event) {

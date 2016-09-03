@@ -63,7 +63,6 @@ class QuadTree {
      * {@code false} otherwise
      */
     boolean add(Point2D point) {
-//        System.out.println(point); // DEBUG
         return point != null && add(root, point);
     }
 
@@ -127,21 +126,32 @@ class QuadTree {
         return false;
     }
 
-    void graphPointsAndBoundaries(GraphicsContext gc, ZoomLevel level) {
+    void graphPointsAndBoundaries(GraphicsContext gc, ZoomLevel level, Rectangle2D localBounds) {
         if (root == null) return;
         double width = gc.getLineWidth();
         gc.setLineWidth(0.5);
-        // Get dimensions of a pixel converted to the original space
+        // Get location of pixel clicked and local bounds in original space
         Point2D pixelDim = new Point2D(1 / level.getWidthRatio(), 1 / level.getHeightRatio());
-        int x = graphPointsAndBoundaries(root, gc, level, pixelDim);
-        System.out.println("Points graphed: " + x);
+        Rectangle2D originalBounds = level.convertToOriginal(localBounds);
+        int x = graphPointsAndBoundaries(root, gc, level, pixelDim, originalBounds);
+        System.out.println("Points graphed: " + x); // DEBUG
         gc.setLineWidth(width);
     }
 
-    private int graphPointsAndBoundaries(Node node, GraphicsContext gc, ZoomLevel level, Point2D pixelDim) {
-        // Check if resolution allows us to ignore this node
+    private int graphPointsAndBoundaries(Node node, GraphicsContext gc, ZoomLevel level,
+                                         Point2D pixelDim, Rectangle2D originalBounds) {
+        // Check if points this node contains are irrelevant to the current zoom
+        if (!originalBounds.intersects(node.bounds))
+            return 0;
+
+        // Check if resolution or screen bounds allow us to ignore this node
         if (node.bounds.getWidth() < pixelDim.getX() && node.bounds.getHeight() < pixelDim.getY())
             return 0;
+
+        // Convert to local coordinates and graph boundaries.
+        Rectangle2D bounds = level.convertToLocal(node.bounds);
+        gc.strokeRect(bounds.getMinX(), bounds.getMinY(),
+                bounds.getWidth(), bounds.getHeight());
 
         // Convert to local coordinates and graph point
         if (node.data != null) {
@@ -150,16 +160,11 @@ class QuadTree {
                     2 * Main.POINT_RAD, 2 * Main.POINT_RAD);
         }
 
-        // Convert to local coordinates and graph boundaries
-        Rectangle2D bounds = level.convertToLocal(node.bounds);
-        gc.strokeRect(bounds.getMinX(), bounds.getMinY(),
-                bounds.getWidth(), bounds.getHeight());
-
         int res = 1;
         // Traverse
         if (node.isLeaf()) return res;
         for (Node quad : node.quads) {
-            res += graphPointsAndBoundaries(quad, gc, level, pixelDim);
+            res += graphPointsAndBoundaries(quad, gc, level, pixelDim, originalBounds);
         }
         return res;
     }
