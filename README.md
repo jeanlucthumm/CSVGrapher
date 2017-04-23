@@ -2,6 +2,14 @@
 A graphing application desigend to provide efficient rendering independent of the number of data points.
 The only limiting factor is computer memory.
 
+Zoomed out sample data:
+
+![zoomed-out](http://i.imgur.com/6TJ5UHJ.png)
+
+Same sample data zoomed into the bottom left section:
+
+![zoomed-in](http://i.imgur.com/Av36nEZ.png)
+
 ## Usage
 Until the first release, the input CSV file path is set through a constant in the `Main` class. The program
 will then read in the file, determine the bounds of the data, and then populate a quad tree with it.
