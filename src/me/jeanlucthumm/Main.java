@@ -31,7 +31,7 @@ public class Main extends Application {
 
     // Constants
     public static final int POINT_RAD = 2;          // radius of points graphed
-    public static final String PATH = "data-large.csv";   // path to data file (csv)
+    public static final String PATH = "data.csv";   // path to data file (csv)
     public static final double ZOOM_INC = 0.1;        // amount of zoomLevel per scroll in percent
 
     // Controls
@@ -115,10 +115,10 @@ public class Main extends Application {
         }
 
         gc.setFill(Color.BLUE);
-        clearAndGraph();
 
         // Display to user
         primaryStage.show();
+        clearAndGraph();
     }
 
     private void clearAndGraph() {
